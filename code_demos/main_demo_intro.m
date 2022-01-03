@@ -1,0 +1,78 @@
+% 2021 12: new demo for intuition 
+% moving from R code to matlab for matching formatting
+
+nsim = 200;
+nfac = 1e3;
+
+red = [ 0.8500    0.3250    0.0980];
+blue = [   0    0.4470    0.7410];
+gray = [1 1 1]*0.3;
+
+rng(1)
+
+
+tfalse = abs(normrnd(0,1, [nfac nsim]));
+ttrue  = gamrnd(2,1.2, [nfac nsim])+1.5;
+tall = [tfalse ttrue];
+
+
+clf; 
+
+subplot(1,2,1)
+
+    % prep
+    edge = 0:0.5:5;
+    center = edge(1:end-1) + mean(diff(edge))/2;
+    n = histcounts(tfalse,edge);
+    nf = n/nsim;
+
+    % plot
+    hb = bar(center,nf); hb.FaceColor = red;
+    
+    hv = vline(1.96,'-');  
+    hv.LineWidth = 3;
+    hv.Color = gray;
+    text(2.1, 300, 't-hurdle = 1.96')    
+    
+    % annotate
+    x = [0.34 0.30]; 
+    y = [0.29 0.17];
+    annotation('textarrow',x,y,'String','FDR = 100%')    
+    
+    % format
+    legend('False Factor')
+    setplot('Panel A','|t-statistic|','Number of Factors')       
+
+
+subplot(1,2,2)
+    
+    % prep
+    edge = 0:0.5:10;
+    center = edge(1:end-1) + mean(diff(edge))/2;
+    n = histcounts(tfalse,edge); nf = n/nsim;
+    n = histcounts(ttrue,edge); nt = n/nsim;    
+
+    % plot
+    hb = bar(center,[nf; nt]', 'stacked');
+    hb(1).FaceColor = red; hb(2).FaceColor = blue;
+        
+    hv = vline(1.96,'-');  
+    hv.LineWidth = 3;
+    hv.Color = gray;
+    text(2.1, 300, 't-hurdle = 1.96')
+        
+    x = [0.78 0.69]; 
+    y = [0.33 0.18];
+    annotation('textarrow',x,y,'String','FDR = 5%')
+    
+    % format
+    legend('False Factor', 'True Factor')
+    setplot('Panel B','|t-statistic|','Number of Factors')    
+    
+    
+set(gcf, 'position', [807.6667  453.5000  630.8333  303.3333])    
+    
+
+pr_tgt2 = sum(tall(:)>1.96)/(2*nsim*nfac)
+
+export_fig('../output_exhibits/intro_fig.pdf')

@@ -1,0 +1,232 @@
+# 2021 11 Andrew
+# Just making a figure for the intro
+
+# ENVIRONMENT ====
+
+setwd('D:/OneDrive/t-hurdles/2021-07-PostOpenAP/code-intuition')
+
+rm(list=ls())
+library(data.table)
+library(tidyverse)
+library(ggplot2)
+#library(ggthemes)
+library(gridExtra)
+
+# parameters
+pnull = 0.44
+N = 1000 #1e4
+
+SE = 15/sqrt(12*240)
+lambda = 0.555
+
+n_simulations <- 50
+
+# function for creating histogram data hdat
+sim = function(pnull, lambda, SE){
+  dat = data.frame(
+    t = abs(rnorm(pnull*N*n_simulations)), group = F
+  ) %>% rbind(
+    data.frame(
+      t = abs(rnorm((1-pnull)*N*n_simulations) + rexp((1-pnull)*N*n_simulations, rate = 1 / lambda)/SE)
+      , group = T
+    )
+  ) %>% 
+    mutate(
+      group = factor(
+        group
+        , levels = c(T,F)
+      )
+    )
+  
+} # end function sim
+
+makehist = function(dat){
+  edge = seq(0,10, 0.5)
+  tmid = edge[1:(length(edge)-1)] + 0.25
+  hdat2 = data.frame(
+    bin = 1:length(tmid), tmid
+  )
+  
+  hdat = dat %>% 
+    filter(t>min(edge), t<max(edge)) %>% 
+    group_by(group) %>% 
+    mutate(
+      bin = findInterval(t,edge)
+    ) %>% 
+    group_by(group,bin) %>% 
+    summarize(
+      n = n()/n_simulations
+    ) %>% 
+    left_join(hdat2)  
+} # end function makehist
+
+
+
+# HIGH FDR ====
+
+dat = sim(pnull = 0.9999, lambda, SE)
+hdat = makehist(dat)
+
+fdr = dat %>% filter(t>1.96) %>% 
+  summarize(fdr = round(mean(group == F)*100))
+
+
+plot = ggplot(hdat, aes(x=tmid, y=n, fill=group)) + 
+  geom_bar(stat='identity', position='stack') +
+  geom_vline(xintercept = 1.96, size = 1) + 
+  labs(title = "", x = "t-statistic", y = "Factors") +
+  
+  scale_fill_manual(
+    labels = c("True Factor", "False Factor"), 
+    values = c(rgb(0,0.4470,0.7410), rgb(0.8500, 0.3250, 0.0980)),
+    name = ""
+  ) +
+  theme_light() +
+  theme(
+    legend.position = c(0.8, 0.8),
+    legend.title = NULL
+  )  +
+  annotate(
+    geom = "text",
+    label = "t = 1.96",
+    x = 2.4,
+    y = N/5
+  ) +
+  geom_curve(aes(x = 3, y = N/10, xend = 2.3, yend = 6),
+             arrow = arrow(length = unit(0.03, "npc")),
+             colour = "black", size = 0.3
+  ) +
+  annotate(
+    geom = "text",
+    label = paste0("FDR = ", fdr$fdr, '%'),
+    x = 3.5,
+    y = N/10
+  )
+
+plot
+
+ggsave(plot, filename = 'output/intro-hi-FDR.pdf', width = 5, height = 2.3)
+
+
+# MED FDR ====
+dat = sim(pnull = 0.44, lambda, SE)
+hdat = makehist(dat)
+
+fdr = dat %>% filter(t>1.96) %>% 
+  summarize(fdr = round(mean(group == F)*100))
+
+
+plot = ggplot(hdat, aes(x=tmid, y=n, fill=group)) + 
+  geom_bar(stat='identity', position='stack') +
+  geom_vline(xintercept = 1.96, size = 1) + 
+  labs(title = "", x = "t-statistic", y = "Factors") +
+  
+  scale_fill_manual(
+    labels = c("True Factor", "False Factor"), 
+    values = c(rgb(0,0.4470,0.7410), rgb(0.8500, 0.3250, 0.0980)),
+    name = ""
+  ) +
+  theme_light() +
+  theme(
+    legend.position = c(0.8, 0.8),
+    legend.title = NULL
+  )  +
+  annotate(
+    geom = "text",
+    label = "t = 1.96",
+    x = 2.8,
+    y = N/5
+  ) +
+  geom_curve(aes(x = 3, y = N/10, xend = 2.3, yend = 6),
+             arrow = arrow(length = unit(0.03, "npc")),
+             colour = "black", size = 0.3
+  ) +
+  annotate(
+    geom = "text",
+    label = paste0("FDR = ", fdr$fdr, '%'),
+    x = 4.0,
+    y = N/10
+  ) + 
+  ylim(-20, 280)
+
+plot
+
+ggsave(plot, filename = 'output/intro-med-FDR.pdf', width = 5, height = 2.3)
+
+
+dat %>% filter(t>1.96) %>% summarize(n()/n_simulations)
+
+# LOW FDR ====
+
+dat = sim(pnull = 0.12, lambda, SE)
+hdat = makehist(dat)
+
+fdr = dat %>% filter(t>1.96) %>% 
+  summarize(fdr = round(mean(group == F)*100))
+
+
+plot = ggplot(hdat, aes(x=tmid, y=n, fill=group)) + 
+  geom_bar(stat='identity', position='stack') +
+  geom_vline(xintercept = 1.96, size = 1) + 
+  labs(title = "", x = "t-statistic", y = "Factors") +
+  
+  scale_fill_manual(
+    labels = c("True Factor", "False Factor"), 
+    values = c(rgb(0,0.4470,0.7410), rgb(0.8500, 0.3250, 0.0980)),
+    name = ""
+  ) +
+  theme_light() +
+  theme(
+    legend.position = c(0.8, 0.8),
+    legend.title = NULL
+  )  +
+  annotate(
+    geom = "text",
+    label = "t = 1.96",
+    x = 2.8,
+    y = N/5
+  ) +
+  geom_curve(aes(x = 3, y = N/10, xend = 2.3, yend = 6),
+             arrow = arrow(length = unit(0.03, "npc")),
+             colour = "black", size = 0.3
+  ) +
+  annotate(
+    geom = "text",
+    label = paste0("FDR = ", fdr$fdr, '%'),
+    x = 4.0,
+    y = N/10
+  ) + 
+  ylim(-20, 280)
+
+plot
+
+ggsave(plot, filename = 'output/intro-low-FDR.pdf', width = 5, height = 2.3)
+
+
+
+
+
+# OTHER STUFF ====
+
+r = function(x){
+  dnorm(x)/dexp(x, rate = 1/2)
+}
+
+R = function(a,b,lambda){
+  numer = 2*(pnorm(b)-pnorm(a))
+  denom = pexp(b, rate = 1/lambda) - pexp(a, rate = 1/lambda)
+  numer/denom
+}
+
+L = function(x){
+  x/(1-x)
+}
+
+
+r(2.0)
+
+
+
+R(2,3,2) - R(2,10,2)
+
+L(0.5)

@@ -10,9 +10,10 @@ gray = [1 1 1]*0.3;
 
 rng(1)
 
-
+% parameters hand-selected so that pr_tgt2 = 0.5 and pr_tgt3_tgt2 = 0.5
+% too lazy too code up numerical solver
 tfalse = abs(normrnd(0,1, [nfac nsim]));
-ttrue  = gamrnd(2,1.2, [nfac nsim])+1.5;
+ttrue  = gamrnd(2,0.8, [nfac nsim])+1.65; 
 tall = [tfalse ttrue];
 
 
@@ -32,18 +33,19 @@ subplot(1,2,1)
     hv = vline(1.96,'-');  
     hv.LineWidth = 3;
     hv.Color = gray;
-    text(2.1, 300, 't-hurdle = 1.96')    
+    text(2.1, 300, 't-hurdle = 1.96','fontsize',11)    
     
     % annotate
     x = [0.34 0.30]; 
-    y = [0.29 0.17];
+    y = [0.29 0.20];
     annotation('textarrow',x,y,'String','FDR = 100%')    
     
     % format
-    legend('False Factor')
+    legend('False Factor','fontsize',11)
     setplot('Panel A','|t-statistic|','Number of Factors')       
 
-
+    addspace(0.05)
+    
 subplot(1,2,2)
     
     % prep
@@ -59,20 +61,24 @@ subplot(1,2,2)
     hv = vline(1.96,'-');  
     hv.LineWidth = 3;
     hv.Color = gray;
-    text(2.1, 300, 't-hurdle = 1.96')
+    text(2.1, 300, 't-hurdle = 1.96','fontsize',11)
         
-    x = [0.78 0.69]; 
-    y = [0.33 0.18];
+    x = [0.78 0.67]; 
+    y = [0.33 0.19];
     annotation('textarrow',x,y,'String','FDR = 5%')
     
     % format
-    legend('False Factor', 'True Factor')
+    legend('False Factor', 'True Factor','fontsize',11)
     setplot('Panel B','|t-statistic|','Number of Factors')    
     
+    addspace(0.05)
     
-set(gcf, 'position', [807.6667  453.5000  630.8333  303.3333])    
+    
+set(gcf, 'position', [807.6667  501.8333  630.8333  255.0000])    
     
 
 pr_tgt2 = sum(tall(:)>1.96)/(2*nsim*nfac)
+
+pr_tgt3_tgt2 = sum(tall(:)>3) / sum(tall(:)>1.96)
 
 export_fig('../output_exhibits/intro_fig.pdf')
